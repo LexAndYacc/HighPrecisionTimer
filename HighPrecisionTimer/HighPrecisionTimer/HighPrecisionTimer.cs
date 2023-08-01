@@ -5,14 +5,18 @@ using System.Threading;
 
 namespace HighPrecisionTimer
 {
+    /// <summary>
+    /// 基于系统性能计数的高性能计时器
+    /// 需要完全占用一个逻辑处理器
+    /// </summary>
     public class HighPrecisionTimer : IDisposable
     {
         /// <summary>
-        /// 是否销毁定时器
+        /// 是否销毁计时器
         /// </summary>
         private bool _disposed = false;
         /// <summary>
-        /// 是否正在运行定时器
+        /// 是否正在运行计时器
         /// </summary>
         private bool _runingTimer = false;
         /// <summary>
@@ -20,11 +24,11 @@ namespace HighPrecisionTimer
         /// </summary>
         private uint _delay = 0;
         /// <summary>
-        /// 定时器周期
+        /// 计时器周期
         /// </summary>
         private long _period = 10;
         /// <summary>
-        /// 定时器运行时独占的CPU核心索引序号
+        /// 计时器运行时独占的CPU核心索引序号
         /// </summary>
         private byte _cpuIndex = 0;
         /// <summary>
@@ -59,12 +63,12 @@ namespace HighPrecisionTimer
             return cpuid;
         }
         /// <summary>
-        /// 定时器构造函数
+        /// 计时器构造函数
         /// </summary>
-        /// <param name="delay">首次启动定时器延时时间</param>
-        /// <param name="period">定时器触发的周期</param>
-        /// <param name="cpuIndex">指定定时器线程独占的CPU核心索引，必须>0，不允许为定时器分配0#CPU</param>
-        /// <param name="tick">定时器触发时的回调函数</param>
+        /// <param name="delay">首次启动计时器延时时间</param>
+        /// <param name="period">计时器触发的周期</param>
+        /// <param name="cpuIndex">指定计时器线程独占的CPU核心索引，必须>0，不允许为计时器分配0#CPU</param>
+        /// <param name="tick">计时器触发时的回调函数</param>
         public HighPrecisionTimer(uint delay, uint period, byte cpuIndex, OnTickHandle tick)
         {
             _tick = tick;
@@ -80,22 +84,22 @@ namespace HighPrecisionTimer
             }
             else
             {
-                throw new Exception("初始化定时器失败");
+                throw new Exception("初始化计时器失败");
             }
             if (_cpuIndex == 0)
             {
-                throw new Exception("定时器不允许被分配到0#CPU");
+                throw new Exception("计时器不允许被分配到0#CPU");
             }
             if (_cpuIndex >= System.Environment.ProcessorCount)
             {
-                throw new Exception("为定时器分配了超出索引的CPU");
+                throw new Exception("为计时器分配了超出索引的CPU");
             }
         }
 
 
         private System.Threading.Thread _threadRumTimer;
         /// <summary>
-        /// 开启定时器
+        /// 开启计时器
         /// </summary>
         public void Open()
         {
@@ -108,7 +112,7 @@ namespace HighPrecisionTimer
 
 
         /// <summary>
-        /// 运行定时器
+        /// 运行计时器
         /// </summary>
         private void RunTimer()
         {
@@ -117,7 +121,7 @@ namespace HighPrecisionTimer
                 up = SetThreadAffinityMask(GetCurrentThread(), new UIntPtr(GetCpuID(_cpuIndex)));
             if (up == UIntPtr.Zero)
             {
-                throw new Exception("为定时器分配CPU核心时失败");
+                throw new Exception("为计时器分配CPU核心时失败");
             }
             QueryPerformanceCounter(out _q2);
             if (_delay > 0)
@@ -143,7 +147,7 @@ namespace HighPrecisionTimer
             }
         }
         /// <summary>
-        /// 销毁当前定时器所占用的资源
+        /// 销毁当前计时器所占用的资源
         /// </summary>
         public void Dispose()
         {
@@ -187,12 +191,4 @@ namespace HighPrecisionTimer
         [DllImport("kernel32.dll")]
         static extern IntPtr GetCurrentThread();
     }
-
-    /// <summary>
-    /// 定时器事件的委托定义
-    /// </summary>
-    /// <param name="sender">事件的发起者，即定时器对象</param>
-    /// <param name="JumpPeriod">上次调用和本次调用跳跃的周期数</param>
-    /// <param name="interval">上次调用和本次调用之间的间隔时间</param>
-    public delegate void OnTickHandle(object sender, double JumpPeriod, long interval);
 }
